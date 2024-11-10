@@ -7,6 +7,13 @@ defmodule JobProcessorWeb.JobController do
     json(conn, %{tasks: result})
   end
 
+  def process_script(conn, %{"tasks" => tasks}) do
+    sorted_task_names = topological_sort(tasks)
+    result = task_names_to_script(sorted_task_names, tasks)
+    IO.puts("Generated script:\n#{result}")
+    json(conn, %{script: result})
+  end
+
   defp topological_sort(tasks) do
     graph = :digraph.new()
 
@@ -28,8 +35,19 @@ defmodule JobProcessorWeb.JobController do
   defp task_names_to_tasks(task_names, tasks) do
     tasks_map = Enum.into(tasks, %{}, fn task -> {task["name"], task} end)
     Enum.map(task_names, fn task_name ->
-      task = tasks_map[task_name]
-      %{name: task["name"], command: task["command"]}
+      task_value = tasks_map[task_name]
+      %{
+        "name" => task_value["name"],
+        "command" => task_value["command"]
+      }
     end)
+  end
+
+  defp task_names_to_script(task_names, tasks) do
+    tasks_map = Enum.into(tasks, %{}, fn task -> {task["name"], task} end)
+    commands = Enum.map(task_names, fn task_name ->
+      tasks_map[task_name]["command"]
+    end)
+    ["#!/usr/bin/env bash" | commands] |> Enum.join("\n")
   end
 end
