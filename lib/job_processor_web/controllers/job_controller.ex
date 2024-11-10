@@ -10,7 +10,6 @@ defmodule JobProcessorWeb.JobController do
   def process_script(conn, %{"tasks" => tasks}) do
     sorted_task_names = topological_sort(tasks)
     result = task_names_to_script(sorted_task_names, tasks)
-    IO.puts("Generated script:\n#{result}")
     json(conn, %{script: result})
   end
 
