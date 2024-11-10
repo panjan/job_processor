@@ -1,4 +1,4 @@
-defmodule JobProcessorWeb.DummyControllerTest do
+defmodule JobProcessorWeb.JobControllerTest do
   use JobProcessorWeb.ConnCase
 
   test "POST /api/job", %{conn: conn} do
