@@ -1,7 +1,11 @@
 defmodule JobProcessorWeb.JobController do
   use JobProcessorWeb, :controller
 
-  def process(conn, _params) do
-    json(conn, %{message: "Hello, World!"})
+  def process(conn, %{"tasks" => tasks}) do
+    results = Enum.map(tasks, fn task ->
+      task
+    end)
+
+    json(conn, %{results: results})
   end
 end
