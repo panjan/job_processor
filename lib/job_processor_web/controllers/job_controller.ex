@@ -2,22 +2,21 @@ defmodule JobProcessorWeb.JobController do
   use JobProcessorWeb, :controller
 
   def process(conn, %{"tasks" => tasks}) do
-    tasks_map = Enum.into(tasks, %{}, fn task -> {task["name"], task} end)
-    sorted_task_names = topological_sort(tasks_map)
-    result = hydrate_tasks(sorted_task_names, tasks_map)
+    sorted_task_names = topological_sort(tasks)
+    result = task_names_to_tasks(sorted_task_names, tasks)
     json(conn, %{tasks: result})
   end
 
-  defp topological_sort(tasks_map) do
+  defp topological_sort(tasks) do
     graph = :digraph.new()
 
-    Enum.each(tasks_map, fn {task_name, _task} ->
-      :digraph.add_vertex(graph, task_name)
+    Enum.each(tasks, fn task ->
+      :digraph.add_vertex(graph, task["name"])
     end)
 
-    Enum.each(tasks_map, fn {task_name, task} ->
+    Enum.each(tasks, fn task ->
       Enum.each(task["requires"] || [], fn req ->
-        :digraph.add_edge(graph, req, task_name)
+        :digraph.add_edge(graph, req, task["name"])
       end)
     end)
 
@@ -26,8 +25,9 @@ defmodule JobProcessorWeb.JobController do
     sorted
   end
 
-  defp hydrate_tasks(sorted_task_names, tasks_map) do
-    Enum.map(sorted_task_names, fn task_name ->
+  defp task_names_to_tasks(task_names, tasks) do
+    tasks_map = Enum.into(tasks, %{}, fn task -> {task["name"], task} end)
+    Enum.map(task_names, fn task_name ->
       task = tasks_map[task_name]
       %{name: task["name"], command: task["command"]}
     end)
